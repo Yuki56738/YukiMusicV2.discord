@@ -26,6 +26,8 @@ import discord4j.voice.AudioProvider;
 import io.github.cdimascio.dotenv.Dotenv;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 import static java.lang.System.out;
 
@@ -35,20 +37,14 @@ public class Main {
 //        Map<Guild, VoiceConnection> guildVoiceConnectionMap = new HashMap<>();
 //        Map<Guild, AudioPlayerManager> guildAudioPlayerManagerMap = new HashMap<>();
         // Creates AudioPlayer instances and translates URLs to AudioTrack instances
-        final AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
-// This is an optimization strategy that Discord4J can utilize.
-// It is not important to understand
-        playerManager.getConfiguration()
-                .setFrameBufferFactory(NonAllocatingAudioFrameBuffer::new);
+        final Map<Guild, AudioPlayerManager> guildAudioPlayerManagerMap = new HashMap<>();
+//    private final AudioPlayer player;
+        final Map<AudioPlayerManager, AudioPlayer> guildAudioPlayerMap = new HashMap<>();
+        final Map<Guild, AudioProvider> guildAudioProviderMap = new HashMap<>();
+        final Map<Guild, TrackScheduler> guildTrackSchedulerMap = new HashMap<>();
 
-// Allow playerManager to parse remote sources like YouTube links
-        AudioSourceManagers.registerRemoteSources(playerManager);
-
-// Create an AudioPlayer so Discord4J can receive audio data
-        final AudioPlayer player = playerManager.createPlayer();
 
 // We will be creating LavaPlayerAudioProvider in the next step
-        AudioProvider provider = new LavaPlayerAudioProvider(player);
 
         Dotenv dotenv = Dotenv.load();
 //        final String token = args[0];
@@ -84,24 +80,40 @@ public class Main {
                 .createGlobalApplicationCommand(appId, stopCommandReq).subscribe();
         gateway.getEventDispatcher().on(ReadyEvent.class).subscribe(event -> {
             out.println("Bot is ready.");
+            out.println(event.getSelf().getUsername());
         });
         gateway.getEventDispatcher().on(ChatInputInteractionEvent.class).subscribe(event -> {
             if (event.getCommandName().equalsIgnoreCase("play")) {
-                event.reply("Connecting...").withEphemeral(Boolean.TRUE).block();
+
+                final AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
+                playerManager.getConfiguration()
+                        .setFrameBufferFactory(NonAllocatingAudioFrameBuffer::new);
+                AudioSourceManagers.registerRemoteSources(playerManager);
+                final AudioPlayer player = playerManager.createPlayer();
+                AudioProvider provider = new LavaPlayerAudioProvider(player);
                 final TrackScheduler scheduler = new TrackScheduler(player, event.getInteraction().getChannel().block());
+                guildAudioPlayerManagerMap.put(event.getInteraction().getGuild().block(), playerManager);
+                guildAudioPlayerMap.put(playerManager, player);
+                guildAudioProviderMap.put(event.getInteraction().getGuild().block(), provider);
+                guildTrackSchedulerMap.put(event.getInteraction().getGuild().block(), scheduler);
+                event.reply("Connecting...").withEphemeral(Boolean.TRUE).block();
+
                 final Member member = event.getInteraction().getMember().orElse(null);
                 if (member != null) {
                     final VoiceState voiceState = member.getVoiceState().block();
                     if (voiceState != null) {
                         final VoiceChannel voiceChannel = voiceState.getChannel().block();
                         if (voiceChannel != null) {
+//                            if (!voiceChannel.getVoiceConnection().block().isConnected().block()) {
                             voiceChannel.join(spec -> {
                                 spec.setProvider(provider);
 //                                guildVoiceConnectionMap.put(event.getInteraction().getGuild().block() ,spec.asRequest().block());
                             }).block();
+//                            }
                             String opt = event.getOption("url").get().getValue().get().getRaw();
                             out.println(opt);
                             playerManager.loadItem(opt, scheduler);
+
 
                             final MessageChannel messageChannel = event.getInteraction().getChannel().block();
 
@@ -142,7 +154,37 @@ public class Main {
                 final VoiceChannel voiceChannel = voiceState.getChannel().block();
                 event.reply("Stopping...").withEphemeral(Boolean.TRUE).block();
 //                player.destroy();
-                player.stopTrack();
+
+                AudioPlayerManager playerManager = guildAudioPlayerManagerMap.get(event.getInteraction().getGuild().block());
+                AudioPlayer player = guildAudioPlayerMap.get(playerManager);
+                TrackScheduler scheduler = guildTrackSchedulerMap.get(event.getInteraction().getGuild().block());
+//                AudioProvider provider = guildAudioProviderMap.get(event.getInteraction().getGuild().block());
+//                player.stopTrack();
+//                playerManager
+                player.destroy();
+                playerManager.shutdown();
+
+                //
+//                playerManager = new DefaultAudioPlayerManager();
+//                playerManager.getConfiguration()
+//                        .setFrameBufferFactory(NonAllocatingAudioFrameBuffer::new);
+//                AudioSourceManagers.registerRemoteSources(playerManager);
+//                player = playerManager.createPlayer();
+//                AudioProvider provider = new LavaPlayerAudioProvider(player);
+//                scheduler = new TrackScheduler(player, event.getInteraction().getChannel().block());
+//                guildAudioPlayerManagerMap.put(event.getInteraction().getGuild().block(), playerManager);
+//                guildAudioPlayerMap.put(playerManager, player);
+//                guildAudioProviderMap.put(event.getInteraction().getGuild().block(), provider);
+//                guildTrackSchedulerMap.put(event.getInteraction().getGuild().block(), scheduler);
+
+
+//                voiceChannel.getVoiceConnection().block().reconnect().block();
+//                playerManager.getConfiguration()
+//                        .setFrameBufferFactory(NonAllocatingAudioFrameBuffer::new);
+//                AudioSourceManagers.registerRemoteSources(playerManager);
+//                guildAudioPlayerMap.put(playerManager, player);
+//                guildAudioPlayerManagerMap.put(event.getInteraction().getGuild().block(), playerManager);
+
             }
         });
         gateway.getEventDispatcher().on(MessageCreateEvent.class).subscribe(event -> {
