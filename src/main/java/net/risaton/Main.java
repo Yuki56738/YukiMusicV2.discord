@@ -119,7 +119,7 @@ public class Main {
                     }
                 }
             } else if (event.getCommandName().equalsIgnoreCase("leave")) {
-                event.reply("Disconnecting...").block();
+                event.reply("Disconnecting...").withEphemeral(Boolean.TRUE).block();
                 final Member member = event.getInteraction().getMember().orElse(null);
                 final VoiceState voiceState = member.getVoiceState().block();
                 final VoiceChannel voiceChannel = voiceState.getChannel().block();
@@ -128,7 +128,7 @@ public class Main {
                 final Member member = event.getInteraction().getMember().orElse(null);
                 final VoiceState voiceState = member.getVoiceState().block();
                 final VoiceChannel voiceChannel = voiceState.getChannel().block();
-                event.reply("Stopping...").block();
+                event.reply("Stopping...").withEphemeral(Boolean.TRUE).block();
                 player.destroy();
             }
         });

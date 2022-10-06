@@ -11,6 +11,7 @@
   <component name="ChangeListManager">
     <list default="true" id="964e8e6b-8948-43af-9ff2-7f55080cd6f8" name="変更" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/net/risaton/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/net/risaton/Main.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -95,6 +96,7 @@
       <workItem from="1665044644479" duration="1175000" />
       <workItem from="1665045828635" duration="23595000" />
       <workItem from="1665070039260" duration="67000" />
+      <workItem from="1665070132427" duration="356000" />
     </task>
     <servers />
   </component>
