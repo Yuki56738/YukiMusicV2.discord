@@ -10,6 +10,7 @@ import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.VoiceStateUpdateEvent;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
+import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.VoiceState;
 import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.core.object.entity.Member;
@@ -24,6 +25,8 @@ import discord4j.voice.AudioProvider;
 import io.github.cdimascio.dotenv.Dotenv;
 
 import java.time.Duration;
+
+import static java.lang.System.out;
 
 public class Main {
 
@@ -77,12 +80,12 @@ public class Main {
         gateway.getRestClient().getApplicationService()
                 .createGlobalApplicationCommand(appId, stopCommandReq).subscribe();
         gateway.getEventDispatcher().on(ReadyEvent.class).subscribe(event -> {
-            System.out.println("Bot is ready.");
+            out.println("Bot is ready.");
         });
         gateway.getEventDispatcher().on(ChatInputInteractionEvent.class).subscribe(event -> {
             if (event.getCommandName().equalsIgnoreCase("play")) {
                 event.reply("Connecting...").withEphemeral(Boolean.TRUE).block();
-                final TrackScheduler scheduler = new TrackScheduler(player);
+                final TrackScheduler scheduler = new TrackScheduler(player, event.getInteraction().getChannel().block());
                 final Member member = event.getInteraction().getMember().orElse(null);
                 if (member != null) {
                     final VoiceState voiceState = member.getVoiceState().block();
@@ -91,8 +94,9 @@ public class Main {
                         if (voiceChannel != null) {
                             voiceChannel.join(spec -> spec.setProvider(provider)).block();
                             String opt = event.getOption("url").get().getValue().get().getRaw();
-                            System.out.println(opt);
+                            out.println(opt);
                             playerManager.loadItem(opt, scheduler);
+
                             final MessageChannel messageChannel = event.getInteraction().getChannel().block();
 
                             //
@@ -130,6 +134,20 @@ public class Main {
                 final VoiceChannel voiceChannel = voiceState.getChannel().block();
                 event.reply("Stopping...").withEphemeral(Boolean.TRUE).block();
                 player.destroy();
+            }
+        });
+        gateway.getEventDispatcher().on(MessageCreateEvent.class).subscribe(event->{
+            final String msg = event.getMessage().getContent();
+            if (msg.equalsIgnoreCase(".debug")){
+                out.println(".debug hit.");
+                out.println();
+//                for (Object x : Flux.just(playerManager.getConfiguration()).toStream().toArray()){
+//                    out.println(x);
+//                }
+//                out.println(String.format());
+//                for (Object x : Flux.just(playerManager.getConfiguration()).toStream().toArray()){
+//                    out.println(x.toString());
+//                };
             }
         });
         gateway.getEventDispatcher().on(VoiceStateUpdateEvent.class).subscribe(event -> {
