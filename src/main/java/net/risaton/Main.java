@@ -79,6 +79,7 @@ public class Main {
                         final VoiceChannel voiceChannel = voiceState.getChannel().block();
                         if (voiceChannel != null) {
                             voiceChannel.join(spec -> spec.setProvider(provider)).block();
+
                             final MessageChannel messageChannel = event.getInteraction().getChannel().block();
                             String opt = event.getOption("url").get().getValue().get().getRaw();
 //                            System.out.println(opt);
