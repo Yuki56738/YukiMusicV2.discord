@@ -74,7 +74,6 @@
     <configuration name="Main" type="Application" factoryName="Application" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="net.risaton.Main" />
       <module name="YukiMusicV2.main" />
-      <option name="PROGRAM_PARAMETERS" value="MTAyMTY3NDYxODY4MTAzMjcyNA.GKJiFi.hEDNOeiBmBVSJt9M_PYwXBCt_Bpfw5vXWiu_ws" />
       <extension name="coverage">
         <pattern>
           <option name="PATTERN" value="net.risaton.*" />
@@ -95,7 +94,7 @@
       <option name="presentableId" value="Default" />
       <updated>1665044642660</updated>
       <workItem from="1665044644479" duration="1175000" />
-      <workItem from="1665045828635" duration="21225000" />
+      <workItem from="1665045828635" duration="22944000" />
     </task>
     <servers />
   </component>

@@ -23,6 +23,8 @@ import discord4j.rest.util.Color;
 import discord4j.voice.AudioProvider;
 import io.github.cdimascio.dotenv.Dotenv;
 
+import java.time.Duration;
+
 public class Main {
 
     public static void main(String[] args) {
@@ -79,7 +81,7 @@ public class Main {
         });
         gateway.getEventDispatcher().on(ChatInputInteractionEvent.class).subscribe(event -> {
             if (event.getCommandName().equalsIgnoreCase("play")) {
-                event.reply("Connecting...").block();
+                event.reply("Connecting...").withEphemeral(Boolean.TRUE).block();
                 final TrackScheduler scheduler = new TrackScheduler(player);
                 final Member member = event.getInteraction().getMember().orElse(null);
                 if (member != null) {
@@ -87,7 +89,10 @@ public class Main {
                     if (voiceState != null) {
                         final VoiceChannel voiceChannel = voiceState.getChannel().block();
                         if (voiceChannel != null) {
-                            voiceChannel.join(spec -> spec.setProvider(provider));
+                            voiceChannel.join(spec -> spec.setProvider(provider)).block();
+                            String opt = event.getOption("url").get().getValue().get().getRaw();
+                            System.out.println(opt);
+                            playerManager.loadItem(opt, scheduler);
                             final MessageChannel messageChannel = event.getInteraction().getChannel().block();
 
                             //
@@ -103,12 +108,13 @@ public class Main {
                                             "ソースコード及び不具合等は以下まで:\n" +
                                             "https://github.com/Yuki56738/YukiMusicV2.discord")
                                     .build();
-                            Message greetingmsg = messageChannel.createMessage(embed).block();
-
+                            Message greetingmsg = messageChannel.createMessage(embed).delayElement(Duration.ofSeconds(5)).block();
                             greetingmsg.delete().block();
-                            String opt = event.getOption("url").get().getValue().get().getRaw();
-//                            System.out.println(opt);
-                            playerManager.loadItem(opt, scheduler);
+//                            messageChannel.createMessage(embed).block();
+
+
+//                            greetingmsg.delete().block();
+
                         }
                     }
                 }
