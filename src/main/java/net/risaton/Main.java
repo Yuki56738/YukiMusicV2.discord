@@ -62,12 +62,9 @@ public class Main {
                 .createGlobalApplicationCommand(appId, joinCommandReq).subscribe();
         gateway.getRestClient().getApplicationService()
                 .createGlobalApplicationCommand(appId, leaveCommandReq).subscribe();
-
-
         gateway.on(ReadyEvent.class).subscribe(event -> {
             System.out.println("Bot is ready.");
         });
-
         gateway.on(ChatInputInteractionEvent.class).subscribe(event -> {
             if (event.getCommandName().equalsIgnoreCase("play")) {
                 event.reply("Connecting...").block();
