@@ -63,6 +63,7 @@ public class TrackScheduler implements AudioLoadResultHandler {
      */
     @Override
     public void loadFailed(FriendlyException exception) {
-        messageChannel.createMessage("読み込み失敗.").block();
+        messageChannel.createMessage(EmbedCreateSpec.builder()
+                .description("読み込み失敗.").build()).block();
     }
 }

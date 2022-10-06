@@ -13,6 +13,7 @@ import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.VoiceState;
 import discord4j.core.object.command.ApplicationCommandOption;
+import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.Member;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.channel.MessageChannel;
@@ -140,8 +141,12 @@ public class Main {
             final String msg = event.getMessage().getContent();
             if (msg.equalsIgnoreCase(".debug")){
                 out.println(".debug hit.");
-                out.println();
-//                for (Object x : Flux.just(playerManager.getConfiguration()).toStream().toArray()){
+//                out.println(String.format("Now connected to: %s", event.getGuild().block().getName()));
+                out.println("Now connected to: ");
+                for (Guild x : gateway.getSelf().block().getClient().getGuilds().toIterable()){
+                    out.println(x.getName());
+                }
+            //                for (Object x : Flux.just(playerManager.getConfiguration()).toStream().toArray()){
 //                    out.println(x);
 //                }
 //                out.println(String.format());
