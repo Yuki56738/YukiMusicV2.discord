@@ -21,7 +21,7 @@ public class TrackScheduler implements AudioLoadResultHandler {
     @Override
     public void trackLoaded(AudioTrack track) {
         player.playTrack(track);
-        player.setVolume(2);
+        player.setVolume(3);
     }
 
     /**

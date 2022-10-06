@@ -92,18 +92,27 @@ public class Main {
             }
         });
         gateway.getEventDispatcher().on(VoiceStateUpdateEvent.class).subscribe(event -> {
-            final Member member = event.getCurrent().getMember().block();
-            final VoiceState voiceState = member.getVoiceState().block();
-            final VoiceChannel voiceChannel = voiceState.getChannel().block();
 
-            System.out.println(voiceChannel.getMembers().count().block().intValue());
-            if (event.isLeaveEvent()) {
-
-
-                if (voiceChannel.getMembers().count().block().intValue() == 1) {
-                    voiceChannel.sendDisconnectVoiceState().block();
+            if (event.isLeaveEvent()){
+//                System.out.println(event.getShardInfo().getCount());
+                if (event.getShardInfo().getCount()  == 1 ){
+//                    event.getCurrent().getChannel().block().sendDisconnectVoiceState().block();
+                    event.getOld().get().getChannel().block().sendDisconnectVoiceState().block();
                 }
             }
+//            System.out.println(event.isLeaveEvent());
+//            final Member member = event.getCurrent().getMember().block();
+//            final VoiceState voiceState = member.getVoiceState().block();
+//            final VoiceChannel voiceChannel = voiceState.getChannel().block();
+
+//            System.out.println(voiceChannel.getMembers().count().block().intValue());
+//            if (event.isLeaveEvent()) {
+
+
+//                if (voiceChannel.getMembers().count().block().intValue() == 1) {
+//                    voiceChannel.sendDisconnectVoiceState().block();
+//                }
+//            }
         });
         gateway.onDisconnect().block();
     }
