@@ -32,6 +32,8 @@ import static java.lang.System.out;
 public class Main {
 
     public static void main(String[] args) {
+//        Map<Guild, VoiceConnection> guildVoiceConnectionMap = new HashMap<>();
+//        Map<Guild, AudioPlayerManager> guildAudioPlayerManagerMap = new HashMap<>();
         // Creates AudioPlayer instances and translates URLs to AudioTrack instances
         final AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
 // This is an optimization strategy that Discord4J can utilize.
@@ -93,7 +95,10 @@ public class Main {
                     if (voiceState != null) {
                         final VoiceChannel voiceChannel = voiceState.getChannel().block();
                         if (voiceChannel != null) {
-                            voiceChannel.join(spec -> spec.setProvider(provider)).block();
+                            voiceChannel.join(spec -> {
+                                spec.setProvider(provider);
+//                                guildVoiceConnectionMap.put(event.getInteraction().getGuild().block() ,spec.asRequest().block());
+                            }).block();
                             String opt = event.getOption("url").get().getValue().get().getRaw();
                             out.println(opt);
                             playerManager.loadItem(opt, scheduler);
@@ -125,28 +130,31 @@ public class Main {
                 }
             } else if (event.getCommandName().equalsIgnoreCase("leave")) {
                 event.reply("Disconnecting...").withEphemeral(Boolean.TRUE).block();
+//                guildVoiceConnectionMap.get(event.getInteraction().getGuild().block()).disconnect().block();
                 final Member member = event.getInteraction().getMember().orElse(null);
                 final VoiceState voiceState = member.getVoiceState().block();
                 final VoiceChannel voiceChannel = voiceState.getChannel().block();
-                voiceChannel.sendDisconnectVoiceState().block();
+//                voiceChannel.sendDisconnectVoiceState().block();
+                voiceChannel.getVoiceConnection().block().disconnect().block();
             } else if (event.getCommandName().equalsIgnoreCase("stop")) {
                 final Member member = event.getInteraction().getMember().orElse(null);
                 final VoiceState voiceState = member.getVoiceState().block();
                 final VoiceChannel voiceChannel = voiceState.getChannel().block();
                 event.reply("Stopping...").withEphemeral(Boolean.TRUE).block();
-                player.destroy();
+//                player.destroy();
+                player.stopTrack();
             }
         });
-        gateway.getEventDispatcher().on(MessageCreateEvent.class).subscribe(event->{
+        gateway.getEventDispatcher().on(MessageCreateEvent.class).subscribe(event -> {
             final String msg = event.getMessage().getContent();
-            if (msg.equalsIgnoreCase(".debug")){
+            if (msg.equalsIgnoreCase(".debug")) {
                 out.println(".debug hit.");
 //                out.println(String.format("Now connected to: %s", event.getGuild().block().getName()));
                 out.println("Now connected to: ");
-                for (Guild x : gateway.getSelf().block().getClient().getGuilds().toIterable()){
+                for (Guild x : gateway.getSelf().block().getClient().getGuilds().toIterable()) {
                     out.println(x.getName());
                 }
-            //                for (Object x : Flux.just(playerManager.getConfiguration()).toStream().toArray()){
+                //                for (Object x : Flux.just(playerManager.getConfiguration()).toStream().toArray()){
 //                    out.println(x);
 //                }
 //                out.println(String.format());
@@ -161,7 +169,9 @@ public class Main {
 //                System.out.println(event.getShardInfo().getCount());
                 if (event.getShardInfo().getCount() == 1) {
 //                    event.getCurrent().getChannel().block().sendDisconnectVoiceState().block();
-                    event.getOld().get().getChannel().block().sendDisconnectVoiceState().block();
+//                    event.getOld().get().getChannel().block().sendDisconnectVoiceState().block();
+//                    guildVoiceConnectionMap.get(event.getCurrent().getGuild().block()).disconnect().block();
+                    event.getOld().get().getChannel().block().getVoiceConnection().block().disconnect().block();
                 }
             }
 //            System.out.println(event.isLeaveEvent());
