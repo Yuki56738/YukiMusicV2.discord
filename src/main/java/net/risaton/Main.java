@@ -62,10 +62,10 @@ public class Main {
                 .createGlobalApplicationCommand(appId, joinCommandReq).subscribe();
         gateway.getRestClient().getApplicationService()
                 .createGlobalApplicationCommand(appId, leaveCommandReq).subscribe();
-        gateway.on(ReadyEvent.class).subscribe(event -> {
+        gateway.getEventDispatcher().on(ReadyEvent.class).subscribe(event -> {
             System.out.println("Bot is ready.");
         });
-        gateway.on(ChatInputInteractionEvent.class).subscribe(event -> {
+        gateway.getEventDispatcher().on(ChatInputInteractionEvent.class).subscribe(event -> {
             if (event.getCommandName().equalsIgnoreCase("play")) {
                 event.reply("Connecting...").block();
                 final TrackScheduler scheduler = new TrackScheduler(player);
@@ -91,10 +91,11 @@ public class Main {
                 voiceChannel.sendDisconnectVoiceState().block();
             }
         });
-        gateway.on(VoiceStateUpdateEvent.class).subscribe(event -> {
+        gateway.getEventDispatcher().on(VoiceStateUpdateEvent.class).subscribe(event -> {
             final Member member = event.getCurrent().getMember().block();
             final VoiceState voiceState = member.getVoiceState().block();
             final VoiceChannel voiceChannel = voiceState.getChannel().block();
+
             System.out.println(voiceChannel.getMembers().count().block().intValue());
             if (event.isLeaveEvent()) {
 
