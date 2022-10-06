@@ -18,6 +18,7 @@ import discord4j.core.object.entity.channel.VoiceChannel;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
 import discord4j.discordjson.json.ApplicationCommandRequest;
 import discord4j.voice.AudioProvider;
+import io.github.cdimascio.dotenv.Dotenv;
 
 public class Main {
 
@@ -38,7 +39,9 @@ public class Main {
 // We will be creating LavaPlayerAudioProvider in the next step
         AudioProvider provider = new LavaPlayerAudioProvider(player);
 
-        final String token = args[0];
+        Dotenv dotenv = Dotenv.load();
+//        final String token = args[0];
+        final String token = dotenv.get("DISCORD_TOKEN");
         final DiscordClient client = DiscordClient.create(token);
         final GatewayDiscordClient gateway = client.login().block();
 

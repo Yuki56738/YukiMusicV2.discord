@@ -6,8 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="964e8e6b-8948-43af-9ff2-7f55080cd6f8" name="変更" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/net/risaton/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/net/risaton/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/net/risaton/TrackScheduler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/net/risaton/TrackScheduler.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -86,7 +86,7 @@
       <option name="presentableId" value="Default" />
       <updated>1665044642660</updated>
       <workItem from="1665044644479" duration="1175000" />
-      <workItem from="1665045828635" duration="13366000" />
+      <workItem from="1665045828635" duration="13928000" />
     </task>
     <servers />
   </component>
