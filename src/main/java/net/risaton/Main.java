@@ -13,10 +13,13 @@ import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.object.VoiceState;
 import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.core.object.entity.Member;
+import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.core.object.entity.channel.VoiceChannel;
+import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
 import discord4j.discordjson.json.ApplicationCommandRequest;
+import discord4j.rest.util.Color;
 import discord4j.voice.AudioProvider;
 import io.github.cdimascio.dotenv.Dotenv;
 
@@ -60,11 +63,17 @@ public class Main {
                 .name("leave")
                 .description("VCから切断.")
                 .build();
+        ApplicationCommandRequest stopCommandReq = ApplicationCommandRequest.builder()
+                .name("stop")
+                .description("音楽を止める.")
+                .build();
 
         gateway.getRestClient().getApplicationService()
                 .createGlobalApplicationCommand(appId, joinCommandReq).subscribe();
         gateway.getRestClient().getApplicationService()
                 .createGlobalApplicationCommand(appId, leaveCommandReq).subscribe();
+        gateway.getRestClient().getApplicationService()
+                .createGlobalApplicationCommand(appId, stopCommandReq).subscribe();
         gateway.getEventDispatcher().on(ReadyEvent.class).subscribe(event -> {
             System.out.println("Bot is ready.");
         });
@@ -78,9 +87,25 @@ public class Main {
                     if (voiceState != null) {
                         final VoiceChannel voiceChannel = voiceState.getChannel().block();
                         if (voiceChannel != null) {
-                            voiceChannel.join(spec -> spec.setProvider(provider)).block();
-
+                            voiceChannel.join(spec -> spec.setProvider(provider));
                             final MessageChannel messageChannel = event.getInteraction().getChannel().block();
+
+                            //
+                            EmbedCreateSpec embed = EmbedCreateSpec.builder()
+                                    .color(Color.MAGENTA)
+                                    .title("YukiMusicV2")
+                                    .description("Created by Yuki.\n" +
+                                            "Open source.\n" +
+                                            "/play [URL] で再生\n" +
+                                            "/stop で停止\n" +
+                                            "/leave で退出\n" +
+                                            "※たまにメンテナンスで落ちます。その際は再度 /joinにて接続をお願い致します。\n" +
+                                            "ソースコード及び不具合等は以下まで:\n" +
+                                            "https://github.com/Yuki56738/YukiMusicV2.discord")
+                                    .build();
+                            Message greetingmsg = messageChannel.createMessage(embed).block();
+
+                            greetingmsg.delete().block();
                             String opt = event.getOption("url").get().getValue().get().getRaw();
 //                            System.out.println(opt);
                             playerManager.loadItem(opt, scheduler);
@@ -93,13 +118,19 @@ public class Main {
                 final VoiceState voiceState = member.getVoiceState().block();
                 final VoiceChannel voiceChannel = voiceState.getChannel().block();
                 voiceChannel.sendDisconnectVoiceState().block();
+            } else if (event.getCommandName().equalsIgnoreCase("stop")) {
+                final Member member = event.getInteraction().getMember().orElse(null);
+                final VoiceState voiceState = member.getVoiceState().block();
+                final VoiceChannel voiceChannel = voiceState.getChannel().block();
+                event.reply("Stopping...").block();
+                player.destroy();
             }
         });
         gateway.getEventDispatcher().on(VoiceStateUpdateEvent.class).subscribe(event -> {
 
-            if (event.isLeaveEvent()){
+            if (event.isLeaveEvent()) {
 //                System.out.println(event.getShardInfo().getCount());
-                if (event.getShardInfo().getCount()  == 1 ){
+                if (event.getShardInfo().getCount() == 1) {
 //                    event.getCurrent().getChannel().block().sendDisconnectVoiceState().block();
                     event.getOld().get().getChannel().block().sendDisconnectVoiceState().block();
                 }
