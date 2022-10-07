@@ -86,6 +86,7 @@ public class Main {
             out.println("Bot is ready.");
             out.println(event.getSelf().getUsername());
         });
+
         gateway.getEventDispatcher().on(ChatInputInteractionEvent.class).subscribe(event -> {
             if (event.getCommandName().equalsIgnoreCase("join")) {
                 event.reply("Connecting...").withEphemeral(Boolean.TRUE).block();
