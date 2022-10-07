@@ -217,7 +217,7 @@ public class Main {
 //                guildAudioPlayerManagerMap.put(event.getInteraction().getGuild().block(), playerManager);
 //                guildAudioPlayerMap.put(playerManager, player);
 //                guildAudioProviderMap.put(event.getInteraction().getGuild().block(), provider);
-//                guildTrackSchedulerMap.put(event.getInteraction().getGuild().block(), scheduler);
+//                guildTrackSchedulerMap.put(event.getInteraction3().getGuild().block(), scheduler);
 
 
 //                voiceChannel.getVoiceConnection().block().reconnect().block();
