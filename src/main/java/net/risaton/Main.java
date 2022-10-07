@@ -15,9 +15,12 @@ import discord4j.core.object.VoiceState;
 import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.Member;
+import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.core.object.entity.channel.VoiceChannel;
+import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
 import discord4j.discordjson.json.ApplicationCommandRequest;
+import discord4j.rest.util.Color;
 import discord4j.voice.AudioProvider;
 import io.github.cdimascio.dotenv.Dotenv;
 
@@ -86,20 +89,23 @@ public class Main {
         gateway.getEventDispatcher().on(ChatInputInteractionEvent.class).subscribe(event -> {
             if (event.getCommandName().equalsIgnoreCase("join")) {
                 event.reply("Connecting...").withEphemeral(Boolean.TRUE).block();
+                final MessageChannel messageChannel = event.getInteraction().getChannel().block();
 
-                Member member = event.getInteraction().getMember().orElse(null);
-                if (member != null) {
-                    VoiceState voiceState = member.getVoiceState().block();
-                    if (voiceState != null) {
-                        VoiceChannel voiceChannel = voiceState.getChannel().block();
-                        if (voiceChannel != null) {
-                            voiceChannel.join().block();
-                            guildVoiceChannelMap.put(event.getInteraction().getGuild().block(), voiceChannel);
-                        }
-                    }
-                }
-            } else if (event.getCommandName().equalsIgnoreCase("play")) {
-
+                //
+                EmbedCreateSpec embed = EmbedCreateSpec.builder()
+                        .color(Color.MAGENTA)
+                        .title("YukiMusicV2")
+                        .description("Created by Yuki.\n" +
+                                "Open source.\n" +
+                                "/play [URL] で再生\n" +
+                                "/stop で停止\n" +
+                                "/leave で退出\n" +
+                                "※たまにメンテナンスで落ちます。その際は再度 /joinにて接続をお願い致します。\n" +
+                                "ソースコード及び不具合等は以下まで:\n" +
+                                "https://github.com/Yuki56738/YukiMusicV2.discord")
+                        .build();
+                messageChannel.createMessage(embed).block();
+                //
                 AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
                 playerManager.getConfiguration()
                         .setFrameBufferFactory(NonAllocatingAudioFrameBuffer::new);
@@ -111,6 +117,22 @@ public class Main {
                 guildAudioPlayerMap.put(playerManager, player);
                 guildAudioProviderMap.put(event.getInteraction().getGuild().block(), provider);
                 guildTrackSchedulerMap.put(event.getInteraction().getGuild().block(), scheduler);
+                //
+
+                Member member = event.getInteraction().getMember().orElse(null);
+                if (member != null) {
+                    VoiceState voiceState = member.getVoiceState().block();
+                    if (voiceState != null) {
+                        VoiceChannel voiceChannel = voiceState.getChannel().block();
+                        if (voiceChannel != null) {
+                            voiceChannel.join().withProvider(provider).block();
+                            guildVoiceChannelMap.put(event.getInteraction().getGuild().block(), voiceChannel);
+                        }
+                    }
+                }
+            } else if (event.getCommandName().equalsIgnoreCase("play")) {
+
+
                 event.reply("Connecting...").withEphemeral(Boolean.TRUE).block();
 
                 VoiceChannel voiceChannel = guildVoiceChannelMap.get(event.getInteraction().getGuild().block());
@@ -129,9 +151,12 @@ public class Main {
 ////                                guildVoiceConnectionMap.put(event.getInteraction().getGuild().block() ,spec.asRequest().block());
 //                                    }).block();
 ////                            }
+                AudioPlayerManager playerManager = guildAudioPlayerManagerMap.get(event.getInteraction().getGuild().block());
+                TrackScheduler scheduler = guildTrackSchedulerMap.get(event.getInteraction().getGuild().block());
                 String opt = event.getOption("url").get().getValue().get().getRaw();
                 out.println(opt);
                 playerManager.loadItem(opt, scheduler);
+
 //
 //
 //                                    final MessageChannel messageChannel = event.getInteraction().getChannel().block();
@@ -178,8 +203,8 @@ public class Main {
 //                AudioProvider provider = guildAudioProviderMap.get(event.getInteraction().getGuild().block());
 //                player.stopTrack();
 //                playerManager
-                player.destroy();
-                playerManager.shutdown();
+                player.stopTrack();
+//                playerManager.shutdown();
 
                 //
 //                playerManager = new DefaultAudioPlayerManager();
@@ -231,6 +256,7 @@ public class Main {
 //                    event.getOld().get().getChannel().block().sendDisconnectVoiceState().block();
 //                    guildVoiceConnectionMap.get(event.getCurrent().getGuild().block()).disconnect().block();
                     event.getOld().get().getChannel().block().getVoiceConnection().block().disconnect().block();
+                    event.getCurrent().getChannel().block().getVoiceConnection().block().disconnect().block();
                 }
             }
 //            System.out.println(event.isLeaveEvent());
