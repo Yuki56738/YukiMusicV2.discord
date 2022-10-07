@@ -15,17 +15,12 @@ import discord4j.core.object.VoiceState;
 import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.Member;
-import discord4j.core.object.entity.Message;
-import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.core.object.entity.channel.VoiceChannel;
-import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
 import discord4j.discordjson.json.ApplicationCommandRequest;
-import discord4j.rest.util.Color;
 import discord4j.voice.AudioProvider;
 import io.github.cdimascio.dotenv.Dotenv;
 
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,6 +37,7 @@ public class Main {
         final Map<AudioPlayerManager, AudioPlayer> guildAudioPlayerMap = new HashMap<>();
         final Map<Guild, AudioProvider> guildAudioProviderMap = new HashMap<>();
         final Map<Guild, TrackScheduler> guildTrackSchedulerMap = new HashMap<>();
+        final Map<Guild, VoiceChannel> guildVoiceChannelMap = new HashMap<>();
 
 
 // We will be creating LavaPlayerAudioProvider in the next step
@@ -54,6 +50,10 @@ public class Main {
 
         long appId = gateway.getRestClient().getApplicationId().block();
         ApplicationCommandRequest joinCommandReq = ApplicationCommandRequest.builder()
+                .name("join")
+                .description("VCに接続.")
+                .build();
+        ApplicationCommandRequest playCommandReq = ApplicationCommandRequest.builder()
                 .name("play")
                 .description("音楽を再生する.")
                 .addOption(ApplicationCommandOptionData.builder()
@@ -71,9 +71,10 @@ public class Main {
                 .name("stop")
                 .description("音楽を止める.")
                 .build();
-
         gateway.getRestClient().getApplicationService()
                 .createGlobalApplicationCommand(appId, joinCommandReq).subscribe();
+        gateway.getRestClient().getApplicationService()
+                .createGlobalApplicationCommand(appId, playCommandReq).subscribe();
         gateway.getRestClient().getApplicationService()
                 .createGlobalApplicationCommand(appId, leaveCommandReq).subscribe();
         gateway.getRestClient().getApplicationService()
@@ -83,63 +84,79 @@ public class Main {
             out.println(event.getSelf().getUsername());
         });
         gateway.getEventDispatcher().on(ChatInputInteractionEvent.class).subscribe(event -> {
-            if (event.getCommandName().equalsIgnoreCase("play")) {
+            if (event.getCommandName().equalsIgnoreCase("join")) {
+                event.reply("Connecting...").withEphemeral(Boolean.TRUE).block();
 
-                final AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
+                Member member = event.getInteraction().getMember().orElse(null);
+                if (member != null) {
+                    VoiceState voiceState = member.getVoiceState().block();
+                    if (voiceState != null) {
+                        VoiceChannel voiceChannel = voiceState.getChannel().block();
+                        if (voiceChannel != null) {
+                            voiceChannel.join().block();
+                            guildVoiceChannelMap.put(event.getInteraction().getGuild().block(), voiceChannel);
+                        }
+                    }
+                }
+            } else if (event.getCommandName().equalsIgnoreCase("play")) {
+
+                AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
                 playerManager.getConfiguration()
                         .setFrameBufferFactory(NonAllocatingAudioFrameBuffer::new);
                 AudioSourceManagers.registerRemoteSources(playerManager);
-                final AudioPlayer player = playerManager.createPlayer();
+                AudioPlayer player = playerManager.createPlayer();
                 AudioProvider provider = new LavaPlayerAudioProvider(player);
-                final TrackScheduler scheduler = new TrackScheduler(player, event.getInteraction().getChannel().block());
+                TrackScheduler scheduler = new TrackScheduler(player, event.getInteraction().getChannel().block());
                 guildAudioPlayerManagerMap.put(event.getInteraction().getGuild().block(), playerManager);
                 guildAudioPlayerMap.put(playerManager, player);
                 guildAudioProviderMap.put(event.getInteraction().getGuild().block(), provider);
                 guildTrackSchedulerMap.put(event.getInteraction().getGuild().block(), scheduler);
                 event.reply("Connecting...").withEphemeral(Boolean.TRUE).block();
 
-                final Member member = event.getInteraction().getMember().orElse(null);
-                if (member != null) {
-                    final VoiceState voiceState = member.getVoiceState().block();
-                    if (voiceState != null) {
-                        final VoiceChannel voiceChannel = voiceState.getChannel().block();
-                        if (voiceChannel != null) {
-//                            if (!voiceChannel.getVoiceConnection().block().isConnected().block()) {
-                            voiceChannel.join(spec -> {
-                                spec.setProvider(provider);
-//                                guildVoiceConnectionMap.put(event.getInteraction().getGuild().block() ,spec.asRequest().block());
-                            }).block();
-//                            }
-                            String opt = event.getOption("url").get().getValue().get().getRaw();
-                            out.println(opt);
-                            playerManager.loadItem(opt, scheduler);
+                VoiceChannel voiceChannel = guildVoiceChannelMap.get(event.getInteraction().getGuild().block());
 
-
-                            final MessageChannel messageChannel = event.getInteraction().getChannel().block();
-
-                            //
-                            EmbedCreateSpec embed = EmbedCreateSpec.builder()
-                                    .color(Color.MAGENTA)
-                                    .title("YukiMusicV2")
-                                    .description("Created by Yuki.\n" +
-                                            "Open source.\n" +
-                                            "/play [URL] で再生\n" +
-                                            "/stop で停止\n" +
-                                            "/leave で退出\n" +
-                                            "※たまにメンテナンスで落ちます。その際は再度 /joinにて接続をお願い致します。\n" +
-                                            "ソースコード及び不具合等は以下まで:\n" +
-                                            "https://github.com/Yuki56738/YukiMusicV2.discord")
-                                    .build();
-                            Message greetingmsg = messageChannel.createMessage(embed).delayElement(Duration.ofSeconds(5)).block();
-                            greetingmsg.delete().block();
+                //                voiceChannel.join().withProvider(provider).block();
+                //
+//                        Member member = event.getInteraction().getMember().orElse(null);
+//                        if (member != null) {
+//                            final VoiceState voiceState = member.getVoiceState().block();
+//                            if (voiceState != null) {
+//                                final VoiceChannel voiceChannel = voiceState.getChannel().block();
+//                                if (voiceChannel != null) {
+////                            if (!voiceChannel.getVoiceConnection().block().isConnected().block()) {
+//                                    voiceChannel.join(spec -> {
+//                                        spec.setProvider(provider);
+////                                guildVoiceConnectionMap.put(event.getInteraction().getGuild().block() ,spec.asRequest().block());
+//                                    }).block();
+////                            }
+                String opt = event.getOption("url").get().getValue().get().getRaw();
+                out.println(opt);
+                playerManager.loadItem(opt, scheduler);
+//
+//
+//                                    final MessageChannel messageChannel = event.getInteraction().getChannel().block();
+//
+//                                    //
+//                                    EmbedCreateSpec embed = EmbedCreateSpec.builder()
+//                                            .color(Color.MAGENTA)
+//                                            .title("YukiMusicV2")
+//                                            .description("Created by Yuki.\n" +
+//                                                    "Open source.\n" +
+//                                                    "/play [URL] で再生\n" +
+//                                                    "/stop で停止\n" +
+//                                                    "/leave で退出\n" +
+//                                                    "※たまにメンテナンスで落ちます。その際は再度 /joinにて接続をお願い致します。\n" +
+//                                                    "ソースコード及び不具合等は以下まで:\n" +
+//                                                    "https://github.com/Yuki56738/YukiMusicV2.discord")
+//                                            .build();
+//                                    Message greetingmsg = messageChannel.createMessage(embed).delayElement(Duration.ofSeconds(5)).block();
+//                                    greetingmsg.delete().block();
+                //
 //                            messageChannel.createMessage(embed).block();
 
 
 //                            greetingmsg.delete().block();
 
-                        }
-                    }
-                }
             } else if (event.getCommandName().equalsIgnoreCase("leave")) {
                 event.reply("Disconnecting...").withEphemeral(Boolean.TRUE).block();
 //                guildVoiceConnectionMap.get(event.getInteraction().getGuild().block()).disconnect().block();
