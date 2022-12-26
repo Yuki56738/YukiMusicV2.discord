@@ -95,7 +95,7 @@ public class Main {
                 //
                 EmbedCreateSpec embed = EmbedCreateSpec.builder()
                         .color(Color.MAGENTA)
-                        .title("YukiMusicV2")
+                        .title("YukiMusicV2.1")
                         .description("Created by Yuki.\n" +
                                 "Open source.\n" +
                                 "/play [URL] で再生\n" +
@@ -156,6 +156,50 @@ public class Main {
                 TrackScheduler scheduler = guildTrackSchedulerMap.get(event.getInteraction().getGuild().block());
                 String opt = event.getOption("url").get().getValue().get().getRaw();
                 out.println(opt);
+                if (Boolean.FALSE.equals(event.getInteraction().getGuild().block().getVoiceConnection().block().isConnected().block())){
+                    event.reply("Connecting...").withEphemeral(Boolean.TRUE).block();
+                    final MessageChannel messageChannel = event.getInteraction().getChannel().block();
+
+                    //
+                    EmbedCreateSpec embed = EmbedCreateSpec.builder()
+                            .color(Color.MAGENTA)
+                            .title("YukiMusicV2.1")
+                            .description("Created by Yuki.\n" +
+                                    "Open source.\n" +
+                                    "/play [URL] で再生\n" +
+                                    "/stop で停止\n" +
+                                    "/leave で退出\n" +
+                                    "※たまにメンテナンスで落ちます。その際は再度 /joinにて接続をお願い致します。\n" +
+                                    "ソースコード及び不具合等は以下まで:\n" +
+                                    "https://github.com/Yuki56738/YukiMusicV2.discord")
+                            .build();
+                    messageChannel.createMessage(embed).block();
+                    //
+                    playerManager = new DefaultAudioPlayerManager();
+                    playerManager.getConfiguration()
+                            .setFrameBufferFactory(NonAllocatingAudioFrameBuffer::new);
+                    AudioSourceManagers.registerRemoteSources(playerManager);
+                    AudioPlayer player = playerManager.createPlayer();
+                    AudioProvider provider = new LavaPlayerAudioProvider(player);
+                    scheduler = new TrackScheduler(player, event.getInteraction().getChannel().block());
+                    guildAudioPlayerManagerMap.put(event.getInteraction().getGuild().block(), playerManager);
+                    guildAudioPlayerMap.put(playerManager, player);
+                    guildAudioProviderMap.put(event.getInteraction().getGuild().block(), provider);
+                    guildTrackSchedulerMap.put(event.getInteraction().getGuild().block(), scheduler);
+                    //
+
+                    Member member = event.getInteraction().getMember().orElse(null);
+                    if (member != null) {
+                        VoiceState voiceState = member.getVoiceState().block();
+                        if (voiceState != null) {
+                            voiceChannel = voiceState.getChannel().block();
+                            if (voiceChannel != null) {
+                                voiceChannel.join().withProvider(provider).block();
+                                guildVoiceChannelMap.put(event.getInteraction().getGuild().block(), voiceChannel);
+                            }
+                        }
+                    }
+                }
                 playerManager.loadItem(opt, scheduler);
 
 //
