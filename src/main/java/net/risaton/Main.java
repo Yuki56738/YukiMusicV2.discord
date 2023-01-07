@@ -95,7 +95,7 @@ public class Main {
                 //
                 EmbedCreateSpec embed = EmbedCreateSpec.builder()
                         .color(Color.MAGENTA)
-                        .title("YukiMusicV2")
+                        .title("YukiMusicV2.2")
                         .description("Created by Yuki.\n" +
                                 "Open source.\n" +
                                 "/play [URL] で再生\n" +
